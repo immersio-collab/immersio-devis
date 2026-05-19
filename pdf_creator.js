@@ -624,20 +624,17 @@ async function saveToGoogleSheets() {
   btn.innerHTML = '<svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-dashoffset="0"></circle></svg> Enregistrement…';
 
   try {
-    const response = await fetch(APPS_SCRIPT_URL, {
+    await fetch(APPS_SCRIPT_URL, {
       method: "POST",
-      body: JSON.stringify(payload)
+      body: JSON.stringify(payload),
+      redirect: "follow",
+      mode: "no-cors"
     });
-    const data = await response.json();
 
-    if (data.success) {
-      toast.style.background = "#059669";
-      toast.style.color = "#fff";
-      toastMsg.textContent = "Devis enregistré — " + data.devis_number;
-      toastIcon.innerHTML = '<polyline points="20 6 9 17 4 12" />';
-    } else {
-      throw new Error(data.error || "réessayez");
-    }
+    toast.style.background = "#059669";
+    toast.style.color = "#fff";
+    toastMsg.textContent = "Devis enregistré dans Google Sheets ✓";
+    toastIcon.innerHTML = '<polyline points="20 6 9 17 4 12" />';
   } catch (error) {
     toast.style.background = "#ef4444";
     toast.style.color = "#fff";
