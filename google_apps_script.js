@@ -2,7 +2,7 @@ function doGet(e) {
   var response = { status: "Immersio Apps Script is live" };
   var output = ContentService.createTextOutput(JSON.stringify(response));
   output.setMimeType(ContentService.MimeType.JSON);
-  return addCorsHeaders(output);
+  return output;
 }
 
 function doPost(e) {
@@ -60,12 +60,12 @@ function doPost(e) {
     
     var out = ContentService.createTextOutput(JSON.stringify({ success: true, devis_number: devisNumber }));
     out.setMimeType(ContentService.MimeType.JSON);
-    return addCorsHeaders(out);
+    return out;
     
   } catch (err) {
     var errOut = ContentService.createTextOutput(JSON.stringify({ success: false, error: err.toString() }));
     errOut.setMimeType(ContentService.MimeType.JSON);
-    return addCorsHeaders(errOut);
+    return errOut;
   }
 }
 
@@ -87,11 +87,4 @@ function setupStatsSheet(ss) {
     ];
     statsSheet.getRange(1, 1, statsData.length, 2).setValues(statsData);
   }
-}
-
-function addCorsHeaders(output) {
-  return output
-    .setHeader("Access-Control-Allow-Origin", "https://immersio-devis.vercel.app")
-    .setHeader("Access-Control-Allow-Methods", "POST")
-    .setHeader("Access-Control-Allow-Headers", "Content-Type");
 }

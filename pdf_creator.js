@@ -1,4 +1,5 @@
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOuKGClWbLeXICNmSVpoOn6MuZOCD4Peg3gixT45LV7yU6nny-_pVkbjS5ZyxtZU5A/exec";
+let confirmedDevisNumber = null;
 
 // ── GLOBAL UTILS ────────────────────────────────────────────────────────────
 
@@ -276,7 +277,7 @@ function generatePDF() {
   text('Vos clients visitent en ligne. Ils réservent. Ils achètent.', ML + 6, y + 14, { size: 7.5, color: [197, 198, 206], italic: true });
 
   // Right Details
-  const devisNum = document.getElementById('clientNom').value ? `N° DEV-${Date.now().toString().slice(-6)}` : 'N° DEVIS';
+  const devisNum = confirmedDevisNumber || (document.getElementById('clientNom').value ? `N° DEV-${Date.now().toString().slice(-6)}` : 'N° DEVIS');
   const today = new Date().toLocaleDateString('fr-FR');
   const validite = document.getElementById('validite').value || '30';
 
@@ -624,17 +625,22 @@ async function saveToGoogleSheets() {
   btn.innerHTML = '<svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-dashoffset="0"></circle></svg> Enregistrement…';
 
   try {
-    await fetch(APPS_SCRIPT_URL, {
+    const response = await fetch(APPS_SCRIPT_URL, {
       method: "POST",
-      body: JSON.stringify(payload),
-      redirect: "follow",
-      mode: "no-cors"
+      body: JSON.stringify(payload)
     });
+    
+    const data = await response.json();
 
-    toast.style.background = "#059669";
-    toast.style.color = "#fff";
-    toastMsg.textContent = "Devis enregistré dans Google Sheets ✓";
-    toastIcon.innerHTML = '<polyline points="20 6 9 17 4 12" />';
+    if (data.success) {
+      confirmedDevisNumber = data.devis_number;
+      toast.style.background = "#059669";
+      toast.style.color = "#fff";
+      toastMsg.textContent = "Devis enregistré — " + data.devis_number;
+      toastIcon.innerHTML = '<polyline points="20 6 9 17 4 12" />';
+    } else {
+      throw new Error(data.error || "réessayez");
+    }
   } catch (error) {
     toast.style.background = "#ef4444";
     toast.style.color = "#fff";
