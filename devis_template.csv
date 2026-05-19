@@ -1,0 +1,2 @@
+devis_number,timestamp,client_nom,client_tel,client_email,client_ville,type_bien,superficie,tour3d_price,options_selected,options_total,hebergement_duree,hebergement_price,subtotal,remise_pct,remise_amt,total_ttc,notes,validite_jours,auto_pricing_used,statut
+IMM-2025-0001,19/05/2026 12:00,Riad Al Baraka,+212600000000,contact@riad.ma,Marrakech,Riad,100–200 m²,2835,Plan 2D / Floor Plan + Vidéo HD (MP4),1134,12 mois,1276,5245,0,0,5245,Test devis,30,TRUE,En attente

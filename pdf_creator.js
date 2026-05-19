@@ -1,3 +1,15 @@
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwOuKGClWbLeXICNmSVpoOn6MuZOCD4Peg3gixT45LV7yU6nny-_pVkbjS5ZyxtZU5A/exec";
+
+// ── GLOBAL UTILS ────────────────────────────────────────────────────────────
+
+// Strip badge text (e.g. "× 1.35") by reading only text nodes from .check-label
+function labelText(el) {
+  return [...el.querySelector('.check-label').childNodes]
+    .filter(n => n.nodeType === Node.TEXT_NODE)
+    .map(n => n.textContent.trim())
+    .join(' ').trim();
+}
+
 // ── INTERACTION ─────────────────────────────────────────────────────────────
 
 const manualOverrides = new Set();
@@ -300,13 +312,6 @@ function generatePDF() {
   text(ville, ML + 5, y + 29, { size: 8 });
 
   // Right Card: Property Details
-  // Strip badge text (e.g. "× 1.35") by reading only text nodes from .check-label
-  function labelText(el) {
-    return [...el.querySelector('.check-label').childNodes]
-      .filter(n => n.nodeType === Node.TEXT_NODE)
-      .map(n => n.textContent.trim())
-      .join(' ').trim();
-  }
   const typeSelectedEl = document.querySelector('#typeGrid .check-item.checked');
   const typeSelectedText = typeSelectedEl ? labelText(typeSelectedEl) : '—';
   const superfSelected = document.querySelector('#superfGrid .check-item.checked');
@@ -535,3 +540,113 @@ function generatePDF() {
 
 // Init
 updateTotal();
+
+// ── GOOGLE SHEETS EXPORT ────────────────────────────────────────────────────
+
+async function saveToGoogleSheets() {
+  const btn = document.getElementById('btn-save-sheets');
+  const toast = document.getElementById('toast-sheets');
+  const toastMsg = document.getElementById('toast-sheets-msg');
+  const toastIcon = document.getElementById('toast-sheets-icon');
+
+  if (APPS_SCRIPT_URL === "PASTE_YOUR_URL_HERE") {
+    toast.style.background = "var(--red, #ef4444)";
+    toast.style.color = "#fff";
+    toastMsg.textContent = "URL Apps Script non configurée";
+    toastIcon.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>';
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 4000);
+    return;
+  }
+
+  const typeSelectedEl = document.querySelector('#typeGrid .check-item.checked');
+  const type_bien = typeSelectedEl ? labelText(typeSelectedEl) : '—';
+  
+  const superfSelected = document.querySelector('#superfGrid .check-item.checked');
+  const superficie = superfSelected ? labelText(superfSelected) : '—';
+
+  const tour3d_price = getCalculatedTour3D();
+
+  const selectedOptions = [];
+  let options_total = 0;
+  const opts = ['plan2d', 'video', 'photos', 'branding', 'gmaps'];
+  opts.forEach(id => {
+    const row = document.querySelector(`[data-id="${id}"]`);
+    if (row && row.classList.contains('selected')) {
+      const name = row.querySelector('.opt-name').childNodes[0].textContent.trim();
+      selectedOptions.push(name);
+      options_total += getVal('price_' + id);
+    }
+  });
+
+  const tagsRow = document.querySelector('[data-id="tags"]');
+  if (tagsRow && tagsRow.classList.contains('selected')) {
+    const name = tagsRow.querySelector('.opt-name').childNodes[0].textContent.trim();
+    selectedOptions.push(name);
+    options_total += getVal('price_tags');
+  }
+
+  const options_selected = selectedOptions.join(' + ');
+
+  const hebergSel = document.querySelector('#hebergGrid .heberg-item.selected');
+  const hebergement_duree = hebergSel ? hebergSel.querySelector('.heberg-duration').childNodes[0].textContent.trim() : '—';
+  const hebergSelVal = hebergSel ? hebergSel.querySelector('input[type="radio"]').value : null;
+  const hebergement_price = hebergSelVal ? getVal('hprice_' + hebergSelVal) : 0;
+
+  const subtotal = tour3d_price + options_total + hebergement_price;
+  const remise_pct = getVal('remise');
+  const remise_amt = subtotal * remise_pct / 100;
+  const total_ttc = subtotal - remise_amt;
+
+  const payload = {
+    client_nom: document.getElementById('clientNom').value,
+    client_tel: document.getElementById('clientTel').value,
+    client_email: document.getElementById('clientEmail').value,
+    client_ville: document.getElementById('clientVille').value,
+    type_bien: type_bien,
+    superficie: superficie,
+    tour3d_price: tour3d_price,
+    options_selected: options_selected,
+    options_total: options_total,
+    hebergement_duree: hebergement_duree,
+    hebergement_price: hebergement_price,
+    subtotal: subtotal,
+    remise_pct: remise_pct,
+    remise_amt: remise_amt,
+    total_ttc: total_ttc,
+    notes: document.getElementById('notes').value,
+    validite_jours: document.getElementById('validite').value,
+    auto_pricing_used: manualOverrides.size === 0
+  };
+
+  const originalContent = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10" stroke-dasharray="31.4 31.4" stroke-dashoffset="0"></circle></svg> Enregistrement…';
+
+  try {
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+
+    if (data.success) {
+      toast.style.background = "#059669";
+      toast.style.color = "#fff";
+      toastMsg.textContent = "Devis enregistré — " + data.devis_number;
+      toastIcon.innerHTML = '<polyline points="20 6 9 17 4 12" />';
+    } else {
+      throw new Error(data.error || "réessayez");
+    }
+  } catch (error) {
+    toast.style.background = "#ef4444";
+    toast.style.color = "#fff";
+    toastMsg.textContent = "Erreur Google Sheets — " + error.message;
+    toastIcon.innerHTML = '<circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line>';
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = originalContent;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 4000);
+  }
+}
