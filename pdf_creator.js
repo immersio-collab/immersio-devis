@@ -394,7 +394,7 @@ function generatePDF() {
   // Populate Option Rows
   const tour3dPrice = getCalculatedTour3D();
 
-  optRow('Tour 3D Interactif ★ (Inclus d\'office)', 'Visite immersive 3D, lien de partage et code d\'intégration web direct', null, tour3dPrice, tour3dPrice, true);
+  optRow('Tour 3D Interactif (Inclus d\'office)', 'Visite immersive 3D, lien de partage et code d\'intégration web direct', null, tour3dPrice, tour3dPrice, true);
 
   const optDefs = [
     { id: 'plan2d', label: 'Plan 2D / Floor Plan', desc: 'Plan d\'architecte 2D haute précision au format PDF et PNG' },
