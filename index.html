@@ -111,7 +111,7 @@
           <div class="base-price-sub">Visite immersive · lien de partage · intégration site web · livraison 48h</div>
         </div>
         <div class="opt-price-wrap">
-          <input class="opt-price" id="price_tour3d" type="number" min="0" placeholder="0" oninput="updateTotal(); setManual('price_tour3d'); updateAutoPrices(true)">
+          <input class="opt-price" id="price_tour3d" type="number" min="0" placeholder="0" oninput="updateTotal(); setManual('price_tour3d'); updateAutoPrices()">
           <span class="opt-currency">MAD</span>
         </div>
       </div>
@@ -167,12 +167,12 @@
         </div>
         <div class="opt-qty-wrap" onclick="event.stopPropagation()">
           <span class="opt-qty-label">Nb. de tags :</span>
-          <input class="opt-qty-input" id="qty_tags" type="number" min="1" value="1" oninput="updateAutoPrices(false); updateTotal()">
+          <input class="opt-qty-input" id="qty_tags" type="number" min="1" value="1" oninput="updateAutoPrices(); updateTotal()">
         </div>
         <div class="opt-price-wrap" onclick="event.stopPropagation()">
-          <input class="opt-price" id="price_tags" type="number" min="0" placeholder="0 / tag" oninput="updateTotal(); setManual('price_tags')"
+          <input class="opt-price" id="price_tags" type="number" min="0" placeholder="0" oninput="updateTotal(); setManual('price_tags')"
             onclick="event.stopPropagation()">
-          <span class="opt-currency">MAD/tag</span>
+          <span class="opt-currency">MAD (total)</span>
         </div>
       </div>
 
@@ -272,13 +272,18 @@
           <span>Sous-total HT</span>
           <span class="total-amount" id="display_subtotal">0 MAD</span>
         </div>
-        <div class="total-line">
-          <span>Remise</span>
-          <div class="discount-row">
-            <input class="discount-input" id="remise" type="number" min="0" max="100" placeholder="0"
-              oninput="updateTotal(); setManual('remise')">
-            <span style="font-size:13px;color:rgba(255,255,255,.5)">%</span>
-            <span class="total-amount" id="display_remise" style="color:rgba(255,255,255,.5)">— 0 MAD</span>
+        <div style="display:flex; flex-direction:column; gap:4px; padding-bottom: 10px; border-bottom: 1px solid rgba(255, 255, 255, .1);">
+          <div class="total-line" style="border-bottom:none; padding-bottom:0;">
+            <span>Remise</span>
+            <div class="discount-row">
+              <input class="discount-input" id="remise" type="number" min="0" max="100" placeholder="0"
+                oninput="updateTotal(); setManual('remise')">
+              <span style="font-size:13px;color:rgba(255,255,255,.5)">%</span>
+              <span class="total-amount" id="display_remise" style="color:rgba(255,255,255,.5)">— 0 MAD</span>
+            </div>
+          </div>
+          <div id="remiseAutoNote" style="font-size:11px; color:#34d399; text-align:right; display:none;">
+            Remise auto : <span id="remiseAutoPct">0</span>% disponible — <a href="#" onclick="resetRemiseOverride(event)" style="color:#34d399; text-decoration:underline; font-weight:600;">Réinitialiser</a>
           </div>
         </div>
         <div class="total-line main">

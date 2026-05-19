@@ -3,9 +3,19 @@
 const manualOverrides = new Set();
 function setManual(id) { manualOverrides.add(id); }
 
+function resetRemiseOverride(e) {
+  if (e) e.preventDefault();
+  manualOverrides.delete('remise');
+  updateAutoPrices();
+  updateTotal();
+}
+
+let lastTypeCoef = 1.0;
+let lastSuperfCoef = 1.0;
+
 function resetCalculations() {
   manualOverrides.clear();
-  updateAutoPrices(false);
+  updateAutoPrices();
   updateTotal();
 }
 
@@ -24,13 +34,40 @@ function toggleRadio(el, group) {
   el.classList.add('checked');
   const rad = el.querySelector('input[type="radio"]');
   if (rad) rad.checked = true;
-  updateAutoPrices(false);
+
+  if (group === 'type' || group === 'superf') {
+    const val = rad ? rad.value : '';
+    const priceTour3DInput = document.getElementById('price_tour3d');
+    let currentTour3D = parseFloat(priceTour3DInput.value) || 0;
+
+    if (currentTour3D > 0) {
+      if (group === 'type') {
+        const newCoef = TYPE_COEFS[val] || 1.0;
+        currentTour3D = (currentTour3D / lastTypeCoef) * newCoef;
+        priceTour3DInput.value = Math.round(currentTour3D);
+        lastTypeCoef = newCoef;
+      } else if (group === 'superf') {
+        const newCoef = SUPERF_COEFS[val] || 1.0;
+        currentTour3D = (currentTour3D / lastSuperfCoef) * newCoef;
+        priceTour3DInput.value = Math.round(currentTour3D);
+        lastSuperfCoef = newCoef;
+      }
+    } else {
+      if (group === 'type') {
+        lastTypeCoef = TYPE_COEFS[val] || 1.0;
+      } else if (group === 'superf') {
+        lastSuperfCoef = SUPERF_COEFS[val] || 1.0;
+      }
+    }
+  }
+
+  updateAutoPrices();
   updateTotal();
 }
 
 function toggleOption(row) {
   row.classList.toggle('selected');
-  updateAutoPrices(false);
+  updateAutoPrices();
   updateTotal();
 }
 
@@ -59,12 +96,7 @@ const TYPE_COEFS = {
 };
 
 function getCalculatedTour3D() {
-  const typeRad = document.querySelector('input[name="type"]:checked');
-  const superfRad = document.querySelector('input[name="superf"]:checked');
-  const sCoef = superfRad ? (SUPERF_COEFS[superfRad.value] || 1.0) : 1.0;
-  const tCoef = typeRad ? (TYPE_COEFS[typeRad.value] || 1.0) : 1.0;
-  const baseTour3D = parseFloat(document.getElementById('price_tour3d').value) || 0;
-  return Math.round(baseTour3D * sCoef * tCoef);
+  return parseFloat(document.getElementById('price_tour3d').value) || 0;
 }
 
 function updateAutoPrices() {
@@ -85,13 +117,13 @@ function updateAutoPrices() {
   if (!manualOverrides.has('price_branding')) document.getElementById('price_branding').value = Math.max(200, Math.round(calculatedTour3D * 0.10));
   if (!manualOverrides.has('price_gmaps')) document.getElementById('price_gmaps').value = 150;
 
-  // 3. Tags Tiered Pricing (Average Unit Price)
+  // 3. Tags Tiered Pricing (Total Combined Price)
   if (!manualOverrides.has('price_tags')) {
     const qty = parseInt(document.getElementById('qty_tags').value) || 1;
     let tagsTotal = 0;
     if (qty <= 5) tagsTotal = qty * 80;
     else tagsTotal = (5 * 80) + ((qty - 5) * 50);
-    document.getElementById('price_tags').value = (tagsTotal / qty).toFixed(2);
+    document.getElementById('price_tags').value = tagsTotal;
   }
 
   // 4. Hébergement Pricing
@@ -110,10 +142,24 @@ function updateAutoPrices() {
   });
   
   const remiseInput = document.getElementById('remise');
-  if (!manualOverrides.has('remise')) {
-    if (activeOpts >= 3) remiseInput.value = 10;
-    else if (activeOpts === 2) remiseInput.value = 5;
-    else remiseInput.value = 0;
+  let autoRemise = 0;
+  if (activeOpts >= 3) autoRemise = 10;
+  else if (activeOpts === 2) autoRemise = 5;
+
+  const noteEl = document.getElementById('remiseAutoNote');
+  const autoPctEl = document.getElementById('remiseAutoPct');
+
+  if (manualOverrides.has('remise')) {
+    const currentVal = parseFloat(remiseInput.value) || 0;
+    if (currentVal !== autoRemise) {
+      if (autoPctEl) autoPctEl.textContent = autoRemise;
+      if (noteEl) noteEl.style.display = 'block';
+    } else {
+      if (noteEl) noteEl.style.display = 'none';
+    }
+  } else {
+    remiseInput.value = autoRemise;
+    if (noteEl) noteEl.style.display = 'none';
   }
 }
 
@@ -130,10 +176,10 @@ function updateTotal() {
     if (row && row.classList.contains('selected')) sub += getVal('price_' + id);
   });
 
-  // Tags: qty × price
+  // Tags: combined total price
   const tagsRow = document.querySelector('[data-id="tags"]');
   if (tagsRow && tagsRow.classList.contains('selected')) {
-    sub += getVal('qty_tags') * getVal('price_tags');
+    sub += getVal('price_tags');
   }
 
   // Heberg
@@ -261,7 +307,8 @@ function generatePDF() {
       .map(n => n.textContent.trim())
       .join(' ').trim();
   }
-  const typesSelected = [...document.querySelectorAll('#typeGrid .check-item.checked')].map(labelText);
+  const typeSelectedEl = document.querySelector('#typeGrid .check-item.checked');
+  const typeSelectedText = typeSelectedEl ? labelText(typeSelectedEl) : '—';
   const superfSelected = document.querySelector('#superfGrid .check-item.checked');
   const superf = superfSelected ? labelText(superfSelected) : '—';
 
@@ -269,7 +316,7 @@ function generatePDF() {
   text('CARACTÉRISTIQUES DU BIEN', ML + cardW + 11, y + 5, { size: 7, bold: true, color: MUTED_C });
 
   text('Type de bien', ML + cardW + 11, y + 11, { size: 6.5, color: MUTED_C });
-  text(typesSelected.join(', ') || '—', ML + cardW + 11, y + 15, { size: 8.5, bold: true });
+  text(typeSelectedText, ML + cardW + 11, y + 15, { size: 8.5, bold: true });
 
   text('Superficie du bien', ML + cardW + 11, y + 21, { size: 6.5, color: MUTED_C });
   text(superf, ML + cardW + 11, y + 25, { size: 8.5, bold: true });
@@ -359,7 +406,7 @@ function generatePDF() {
     let qty = null, prixUnit = getVal('price_' + opt.id), total = prixUnit;
     if (opt.qty === 'tags') {
       qty = getVal('qty_tags');
-      total = qty * prixUnit;
+      total = prixUnit; // price_tags is already the combined total!
     }
     optRow(opt.label, opt.desc, qty, prixUnit, total, sel);
   });
@@ -433,9 +480,8 @@ function generatePDF() {
       if (document.querySelector(`[data-id="${id}"]`)?.classList.contains('selected')) s += getVal('price_' + id);
     });
     const tr = document.querySelector('[data-id="tags"]');
-    if (tr?.classList.contains('selected')) s += getVal('qty_tags') * getVal('price_tags');
-    const hs = document.querySelector('#hebergGrid .heberg-item.selected');
-    if (hs) s += parseFloat(hs.querySelector('.heberg-price-input').value) || 0;
+    if (tr?.classList.contains('selected')) s += getVal('price_tags');
+    if (hebergSelVal) s += getVal('hprice_' + hebergSelVal);
     return s;
   })();
   const remisePct = getVal('remise');
