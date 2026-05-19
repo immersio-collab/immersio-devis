@@ -96,10 +96,10 @@ function updateAutoPrices() {
 
   // 4. Hébergement Pricing
   if (!manualOverrides.has('hprice_1')) document.getElementById('hprice_1').value = Math.max(150, Math.round(calculatedTour3D * 0.12));
-  if (!manualOverrides.has('hprice_3')) document.getElementById('hprice_3').value = Math.round(calculatedTour3D * 0.20);
-  if (!manualOverrides.has('hprice_6')) document.getElementById('hprice_6').value = Math.round(calculatedTour3D * 0.30);
-  if (!manualOverrides.has('hprice_12')) document.getElementById('hprice_12').value = Math.round(calculatedTour3D * 0.45);
-  if (!manualOverrides.has('hprice_24')) document.getElementById('hprice_24').value = Math.round(calculatedTour3D * 0.65);
+  if (!manualOverrides.has('hprice_3')) document.getElementById('hprice_3').value = Math.max(200, Math.round(calculatedTour3D * 0.20));
+  if (!manualOverrides.has('hprice_6')) document.getElementById('hprice_6').value = Math.max(250, Math.round(calculatedTour3D * 0.30));
+  if (!manualOverrides.has('hprice_12')) document.getElementById('hprice_12').value = Math.max(350, Math.round(calculatedTour3D * 0.45));
+  if (!manualOverrides.has('hprice_24')) document.getElementById('hprice_24').value = Math.max(500, Math.round(calculatedTour3D * 0.65));
 
   // 5. Bundle Discount logic
   const opts = ['plan2d', 'video', 'photos', 'branding', 'gmaps', 'tags'];
