@@ -493,7 +493,7 @@ function generatePDF() {
     
     if (prolongRate > 0) {
       const noteProlong = `• Prolongation : À l'échéance des ${durLabel}, prolongation au tarif préférentiel de ${prolongRate} MAD / mois supplémentaire.`;
-      const noteInfra = `• Infrastructure : Hébergement sur serveur dédié 3D requis pour le moteur d'affichage (non compatible Vercel/hébergement classique).`;
+      const noteInfra = `• Infrastructure : Intégration possible sur votre site, mais serveur dédié 3D requis pour le moteur d'affichage (Vercel / hébergement classique non compatible).`;
       
       const startY = hebY + hebH + 4;
       
