@@ -11,6 +11,10 @@ function labelText(el) {
     .join(' ').trim();
 }
 
+const PROLONGATION_RATES = {
+  '1': 150, '3': 100, '6': 50, '12': 45, '24': 35
+};
+
 // ── INTERACTION ─────────────────────────────────────────────────────────────
 
 const manualOverrides = new Set();
@@ -104,6 +108,20 @@ function selectHeberg(item) {
   item.classList.add('selected');
   const rad = item.querySelector('input[type="radio"]');
   if (rad) rad.checked = true;
+
+  // Update prolongation info
+  const prolongInfo = document.getElementById('prolongationInfo');
+  const prolongRateEl = document.getElementById('prolongationRate');
+  if (prolongInfo && prolongRateEl && rad) {
+    const rate = PROLONGATION_RATES[rad.value];
+    if (rate) {
+      prolongRateEl.textContent = rate;
+      prolongInfo.style.display = 'block';
+    } else {
+      prolongInfo.style.display = 'none';
+    }
+  }
+
   updateTotal();
 }
 
@@ -118,6 +136,7 @@ const TYPE_COEFS = {
   'showroom': 1.20, 'salle_sport': 1.25, 'riad': 1.35,
   'evenementiel': 1.40, 'hotel': 1.45
 };
+
 
 function getCalculatedTour3D() {
   return parseFloat(document.getElementById('price_tour3d').value) || 0;
@@ -467,7 +486,23 @@ function generatePDF() {
     }
   });
 
-  y += hebH + 11.5;
+// Prolongation & Infrastructure notes — auto-generated based on selected duration
+  if (hebergSelVal) {
+    const prolongRate = PROLONGATION_RATES[hebergSelVal] || 0;
+    const durLabel = durations[durValues.indexOf(hebergSelVal)] || hebergSelVal;
+    
+    if (prolongRate > 0) {
+      const noteProlong = `• Prolongation : À l'échéance des ${durLabel}, prolongation au tarif préférentiel de ${prolongRate} MAD / mois supplémentaire.`;
+      const noteInfra = `• Infrastructure : Hébergement sur serveur dédié 3D requis pour le moteur d'affichage (non compatible Vercel/hébergement classique).`;
+      
+      const startY = hebY + hebH + 4;
+      
+      text(noteProlong, ML + 2, startY, { size: 6.5, italic: true, color: MUTED_C });
+      text(noteInfra, ML + 2, startY + 3.5, { size: 6.5, italic: true, color: MUTED_C });
+    }
+  }
+
+  y += hebH + (hebergSelVal ? 18 : 11.5);
 
   // ── 5. NOTES & CONDITIONS — SIDE BY SIDE (FULL WIDTH) ───────────────────
   const ncW = (CW - 6) / 2;   // each card ~87mm
