@@ -28,6 +28,10 @@ let lastSuperfCoef = 1.0;
 
 function resetCalculations() {
   manualOverrides.clear();
+  const customContainer = document.getElementById('autreTypeContainer');
+  if (customContainer) customContainer.style.display = 'none';
+  const customInput = document.getElementById('type_autre_custom');
+  if (customInput) customInput.value = '';
   updateAutoPrices();
   updateTotal();
 }
@@ -47,6 +51,13 @@ function toggleRadio(el, group) {
   el.classList.add('checked');
   const rad = el.querySelector('input[type="radio"]');
   if (rad) rad.checked = true;
+
+  if (group === 'type') {
+    const customContainer = document.getElementById('autreTypeContainer');
+    if (customContainer) {
+      customContainer.style.display = (rad && rad.value === 'autre') ? 'block' : 'none';
+    }
+  }
 
   if (group === 'type' || group === 'superf') {
     const val = rad ? rad.value : '';
@@ -103,7 +114,7 @@ const SUPERF_COEFS = {
   '200-500': 2.0, '500-1000': 2.6, '>1000': 3.5
 };
 const TYPE_COEFS = {
-  'appartement': 1.0, 'residence': 1.0, 'villa': 1.15,
+  'appartement': 1.0, 'residence': 1.40, 'autre': 1.40, 'villa': 1.15,
   'showroom': 1.20, 'salle_sport': 1.25, 'riad': 1.35,
   'evenementiel': 1.40, 'hotel': 1.45
 };
@@ -314,7 +325,11 @@ function generatePDF() {
 
   // Right Card: Property Details
   const typeSelectedEl = document.querySelector('#typeGrid .check-item.checked');
-  const typeSelectedText = typeSelectedEl ? labelText(typeSelectedEl) : '—';
+  let typeSelectedText = typeSelectedEl ? labelText(typeSelectedEl) : '—';
+  if (typeSelectedEl && typeSelectedEl.querySelector('input[value="autre"]')) {
+    const customVal = document.getElementById('type_autre_custom')?.value.trim();
+    if (customVal) typeSelectedText = customVal;
+  }
   const superfSelected = document.querySelector('#superfGrid .check-item.checked');
   const superf = superfSelected ? labelText(superfSelected) : '—';
 
@@ -381,7 +396,7 @@ function generatePDF() {
     text(desc, ML + 9, rowY + 2.3, { size: 6, color: MUTED_C });
 
     // Total
-    text(isSelected && total !== null ? pdfFmt(total) + ' MAD' : '—', W - MR - 5, rowY + 0.2, { size: 7.5, bold: isSelected, align: 'right', color: isSelected ? DARK_C : MUTED_C });
+    text(total !== null && total > 0 ? pdfFmt(total) + ' MAD' : '—', W - MR - 5, rowY + 0.2, { size: 7.5, bold: isSelected, align: 'right', color: isSelected ? DARK_C : MUTED_C });
     
     // Row divider
     if (rowIndex < 6) {
@@ -474,7 +489,7 @@ function generatePDF() {
   text('CONDITIONS DE RÈGLEMENT', ML + ncW + 11, y + 5.5, { size: 6.5, bold: true, color: MUTED_C });
   text('· Acompte : 50% à la signature du devis', ML + ncW + 11, y + 12, { size: 7 });
   text('· Solde : 50% à la livraison finale du projet', ML + ncW + 11, y + 17, { size: 7 });
-  text('· Délai : Livraison sous 48h ouvrées', ML + ncW + 11, y + 22, { size: 7 });
+  text('· Délai : De 48h à une semaine ouvrée', ML + ncW + 11, y + 22, { size: 7 });
   text(`· Devis valable pendant ${validite} jours`, ML + ncW + 11, y + 27, { size: 6.5, color: MUTED_C });
 
   y += ncH + 5;
@@ -561,7 +576,11 @@ async function saveToGoogleSheets() {
   }
 
   const typeSelectedEl = document.querySelector('#typeGrid .check-item.checked');
-  const type_bien = typeSelectedEl ? labelText(typeSelectedEl) : '—';
+  let type_bien = typeSelectedEl ? labelText(typeSelectedEl) : '—';
+  if (typeSelectedEl && typeSelectedEl.querySelector('input[value="autre"]')) {
+    const customVal = document.getElementById('type_autre_custom')?.value.trim();
+    if (customVal) type_bien = customVal;
+  }
   
   const superfSelected = document.querySelector('#superfGrid .check-item.checked');
   const superficie = superfSelected ? labelText(superfSelected) : '—';

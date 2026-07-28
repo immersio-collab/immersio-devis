@@ -100,9 +100,6 @@
         <div class="check-item" onclick="toggleRadio(this, 'type')"><input type="radio" name="type" value="hotel">
           <div class="check-box"></div><span class="check-label">Hôtel <span class="calc-badge">× 1.45</span></span>
         </div>
-        <div class="check-item" onclick="toggleRadio(this, 'type')"><input type="radio" name="type" value="residence">
-          <div class="check-box"></div><span class="check-label">Résidence</span>
-        </div>
         <div class="check-item" onclick="toggleRadio(this, 'type')"><input type="radio" name="type" value="appartement">
           <div class="check-box"></div><span class="check-label">Appartement</span>
         </div>
@@ -118,6 +115,13 @@
         <div class="check-item" onclick="toggleRadio(this, 'type')"><input type="radio" name="type" value="evenementiel">
           <div class="check-box"></div><span class="check-label">Événementiel <span class="calc-badge">× 1.4</span></span>
         </div>
+        <div class="check-item" onclick="toggleRadio(this, 'type')"><input type="radio" name="type" value="autre">
+          <div class="check-box"></div><span class="check-label">Autre <span class="calc-badge">× 1.4</span></span>
+        </div>
+      </div>
+      <div id="autreTypeContainer" class="field" style="display: none; margin-top: 12px;">
+        <label>Préciser le type de bien</label>
+        <input type="text" id="type_autre_custom" placeholder="Ex: Entrepôt, Restaurant, Galerie..." style="width: 100%;">
       </div>
     </div>
 
